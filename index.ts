@@ -9,7 +9,7 @@ import { verifyToken } from './src/middlewares/verifyToken';
 dotenv.config();
 
 const PORT = process.env.PORT || 3001;
-const dbURL = `mongodb+srv://${process.env.DATABASE_USERNAME}:${process.env.DATABASE_PASSWORD}@cluster0.fe0yt.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const dbURL =`mongodb+srv://${process.env.DATABASE_USERNAME}:${process.env.DATABASE_PASSWORD}@cluster0.zr0fa.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 const app = express();
 
 app.use(express.json());
@@ -24,7 +24,7 @@ const connectDB = async () => {
 	try {
 		await mongoose.connect(dbURL);
 
-		console.log(`Connect to db successfully!!!`);
+		console.log(`Connect to db successfully1111!!!`);
 	} catch (error) {
 		console.log(`Can not connect to db ${error}`);
 	}
