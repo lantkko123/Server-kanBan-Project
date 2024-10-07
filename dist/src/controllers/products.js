@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateProduct = exports.getProductDetail = exports.removeProduct = exports.addSubProduct = exports.getCategoryDetail = exports.addProduct = exports.updateCategory = exports.getProducts = exports.getCategories = exports.deleteCategories = exports.addCategory = void 0;
+exports.updateSubProduct = exports.removeSubProduct = exports.filterProducts = exports.getFilterValues = exports.updateProduct = exports.getProductDetail = exports.removeProduct = exports.addSubProduct = exports.getCategoryDetail = exports.addProduct = exports.updateCategory = exports.getProducts = exports.getCategories = exports.deleteCategories = exports.addCategory = void 0;
 const CategortModel_1 = __importDefault(require("../models/CategortModel"));
 const ProductModel_1 = __importDefault(require("../models/ProductModel"));
 const SubProductModel_1 = __importDefault(require("../models/SubProductModel"));
@@ -98,6 +98,8 @@ const findAndRemoveCategoryInProducts = (id) => __awaiter(void 0, void 0, void 0
     // }
     // return data;
 });
+// @daoquang-livecode
+// @bsdaoquang
 const handleRemoveCategoryInProducts = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield CategortModel_1.default.findByIdAndDelete(id);
     const products = yield ProductModel_1.default.find({ categories: { $all: id } });
@@ -174,23 +176,31 @@ const addProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.addProduct = addProduct;
 const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { page, pageSize } = req.query;
+    const { page, pageSize, title } = req.query;
+    yield checkDeletedProduct();
+    const filter = {};
+    filter.isDeleted = false;
+    if (title) {
+        filter.slug = { $regex: title };
+    }
     try {
         const skip = (page - 1) * pageSize;
-        const products = yield ProductModel_1.default.find({
+        const products = yield ProductModel_1.default.find(filter).skip(skip).limit(pageSize);
+        const total = yield ProductModel_1.default.find({
             isDeleted: false,
-        })
-            .skip(skip)
-            .limit(pageSize);
+        });
         const items = [];
         if (products.length > 0) {
             products.forEach((item) => __awaiter(void 0, void 0, void 0, function* () {
-                const children = yield SubProductModel_1.default.find({ productId: item._id });
+                const children = yield SubProductModel_1.default.find({
+                    productId: item._id,
+                    isDeleted: false,
+                });
                 items.push(Object.assign(Object.assign({}, item._doc), { subItems: children }));
                 items.length === products.length &&
                     res.status(200).json({
                         message: 'Products',
-                        data: items,
+                        data: { items, totalItems: total.length },
                     });
             }));
         }
@@ -208,13 +218,41 @@ const getProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.getProducts = getProducts;
+const checkDeletedProduct = () => __awaiter(void 0, void 0, void 0, function* () {
+    // console.log('Get and check deleted product about 30 days from now');
+    /*
+
+        const productDeleted = await ProductModel.find({
+            isDeleted: true
+        })
+    
+
+        productDeleted.forEach(product => {
+
+
+        const users = await userModel.find({
+            favouritest: {$all: product_id}
+        })
+
+        if(users.length === 0)
+            remove product
+        })
+    */
+});
 const getProductDetail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.query;
     try {
         const item = yield ProductModel_1.default.findById(id);
+        const subProducts = yield SubProductModel_1.default.find({
+            productId: id,
+            isDeleted: false,
+        });
         res.status(200).json({
             message: 'Products',
-            data: item,
+            data: {
+                product: item,
+                subProducts,
+            },
         });
     }
     catch (error) {
@@ -224,6 +262,44 @@ const getProductDetail = (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 });
 exports.getProductDetail = getProductDetail;
+const removeSubProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, isSoftDelete } = req.query;
+    try {
+        if (isSoftDelete) {
+            yield SubProductModel_1.default.findByIdAndUpdate(id, {
+                isDeleted: true,
+            });
+        }
+        else {
+            yield SubProductModel_1.default.findByIdAndDelete(id);
+        }
+        res.status(200).json({
+            message: 'Removed!!!',
+        });
+    }
+    catch (error) {
+        res.status(404).json({
+            message: error.message,
+        });
+    }
+});
+exports.removeSubProduct = removeSubProduct;
+const updateSubProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.query;
+    const body = req.body;
+    try {
+        yield SubProductModel_1.default.findByIdAndUpdate(id, body);
+        res.status(200).json({
+            message: 'Updated!!!',
+        });
+    }
+    catch (error) {
+        res.status(404).json({
+            message: error.message,
+        });
+    }
+});
+exports.updateSubProduct = updateSubProduct;
 const addSubProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const body = req.body;
     try {
@@ -285,4 +361,95 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.updateProduct = updateProduct;
+const getFilterValues = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const datas = yield SubProductModel_1.default.find();
+        const colors = [];
+        const sizes = [];
+        const prices = [];
+        if (datas.length > 0) {
+            datas.forEach((item) => {
+                item.color && !colors.includes(item.color) && colors.push(item.color);
+                item.size && sizes.push({ label: item.size, value: item.size });
+                prices.push(item.price);
+            });
+        }
+        // console.log(datas);
+        res.status(200).json({
+            message: 'fafa',
+            data: {
+                colors,
+                prices,
+                sizes,
+            },
+        });
+    }
+    catch (error) {
+        res.status(404).json({
+            message: error.message,
+        });
+    }
+});
+exports.getFilterValues = getFilterValues;
+const filterProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const body = req.body;
+    const { colors, size, price, categories } = body;
+    let filter = {};
+    if (colors && colors.length > 0) {
+        filter.color = { $all: colors };
+    }
+    if (size) {
+        filter.size = { $eq: size };
+    }
+    if (price && price.length > 0) {
+        filter['$and'] = [
+            {
+                price: { $lte: price[1] },
+            },
+            {
+                price: {
+                    $gte: price[0],
+                },
+            },
+        ];
+    }
+    // @bsdaoquang 1 - 20
+    // @daoquang-livecode 20 - nay
+    try {
+        const subProducts = yield SubProductModel_1.default.find(filter);
+        if (categories) {
+        }
+        else {
+        }
+        const productIds = [];
+        const products = [];
+        if (subProducts.length > 0) {
+            subProducts.forEach((item) => !productIds.includes(item.productId) &&
+                productIds.push(item.productId));
+            productIds.forEach((id) => __awaiter(void 0, void 0, void 0, function* () {
+                const product = yield ProductModel_1.default.findById(id);
+                const children = subProducts.filter((element) => element.productId === id);
+                const items = Object.assign(Object.assign({}, product._doc), { subItems: children });
+                products.push(items);
+                if (products.length === productIds.length) {
+                    res.status(200).json({
+                        data: {
+                            items: products,
+                            totalItems: products.length,
+                        },
+                    });
+                }
+            }));
+        }
+        else {
+            res.status(200).json({ data: [] });
+        }
+    }
+    catch (error) {
+        res.status(404).json({
+            message: error.message,
+        });
+    }
+});
+exports.filterProducts = filterProducts;
 //# sourceMappingURL=products.js.map
