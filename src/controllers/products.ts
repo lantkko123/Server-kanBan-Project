@@ -102,7 +102,12 @@ const findAndRemoveCategoryInProducts = async (id: string) => {
 	// return data;
 };
 
+<<<<<<< HEAD
 
+=======
+// @daoquang-livecode
+// @bsdaoquang
+>>>>>>> 3f3d6af5b6d6b4fb6e5cfc340483b1038e26eefb
 
 const handleRemoveCategoryInProducts = async (id: string) => {
 	await CategoryModel.findByIdAndDelete(id);
