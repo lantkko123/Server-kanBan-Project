@@ -39,7 +39,7 @@ const addCategory = async (req: any, res: any) => {
 
 const getCategories = async (req: any, res: any) => {
 	const { page, pageSize } = req.query;
-
+	console.log(res.data)
 	try {
 		const skip = (page - 1) * pageSize;
 
