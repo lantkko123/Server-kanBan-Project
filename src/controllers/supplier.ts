@@ -3,47 +3,47 @@
 
 import SupplierModel from '../models/SupplierModel';
 import { supplierForm } from '../forms/supplier';
- const getSuppliers = async (_req:any,res:any) => {
-	try {
-		const items = await SupplierModel.find({});
-
-		res.status(200).json({
-			message:'Products',
-			data:items,
-		});
-
-	} catch (error:any) {
-		res.status(404).json({
-			message:error.message,
-		});
-	}
- }
-// const getSuppliers = async (req: any, res: any) => {
-
-// 	const { pageSize, page } = req.query;
-
+//  const getSuppliers = async (_req:any,res:any) => {
 // 	try {
-// 		const skip = (page - 1) * pageSize;
-
-// 		const items = await SupplierModel.find({ isDeleted: false })
-// 			.skip(skip)
-// 			.limit(pageSize);
-
-// 		const total = await SupplierModel.countDocuments();
+// 		const items = await SupplierModel.find({});
 
 // 		res.status(200).json({
-// 			message: 'Products',
-// 			data: {
-// 				total,
-// 				items,
-// 			},
+// 			message:'Products',
+// 			data:items,
 // 		});
-// 	} catch (error: any) {
+
+// 	} catch (error:any) {
 // 		res.status(404).json({
-// 			message: error.message,
+// 			message:error.message,
 // 		});
 // 	}
-// };
+//  }
+const getSuppliers = async (req: any, res: any) => {
+
+	const { pageSize, page } = req.query;
+
+	try {
+		const skip = (page - 1) * pageSize;
+
+		const items = await SupplierModel.find({ isDeleted: false })
+			.skip(skip)
+			.limit(pageSize);
+
+		const total = await SupplierModel.countDocuments();
+
+		res.status(200).json({
+			message: 'Products',
+			data: {
+				total,
+				items,
+			},
+		});
+	} catch (error: any) {
+		res.status(404).json({
+			message: error.message,
+		});
+	}
+};
 
 const getExportData = async (req: any, res: any) => {
 	const body = req.body;
@@ -84,13 +84,31 @@ const getExportData = async (req: any, res: any) => {
 		});
 	}
 };
+// const addNew = async (req: any, res: any) => {
+// 	const body = req.body;
+// 	try {
+// 		const newSupplier = new SupplierModel(body);
+// 		newSupplier.save();
+// 		res.status(200).json({
+// 			message: 'Add new supplier successfully!!!',
+// 			data: newSupplier,
+// 		});
+// 	} catch (error: any) {
+// 		res.status(404).json({
+// 			message: error.message,
+// 		});
+// 	}
+// };
 const addNew = async (req: any, res: any) => {
 	const body = req.body;
+
 	try {
 		const newSupplier = new SupplierModel(body);
-		newSupplier.save();
+
+		await newSupplier.save();
+
 		res.status(200).json({
-			message: 'Add new supplier successfully!!!',
+			message: 'Supplier',
 			data: newSupplier,
 		});
 	} catch (error: any) {
@@ -132,6 +150,37 @@ const removeSupplier = async (req: any, res: any) => {
 		});
 	}
 };
+// const removeSupplier = async (req: any, res: any) => {
+// 	const { id } = req.query;
+
+// 	try {
+// 		const subItems = await SupplierModel.find({ isDeleted: id });
+
+// 		if (subItems.length > 0) {
+// 			await handleRemoveSupplier(subItems);
+// 		}
+
+// 		await SupplierModel.findByIdAndUpdate(id, {
+// 			isDeleted: true,
+// 		});
+
+// 		res.status(200).json({
+// 			message: 'Product removed!!',
+// 		});
+// 	} catch (error: any) {
+// 		res.status(404).json({
+// 			message: error.message,
+// 		});
+// 	}
+// };
+
+// const handleRemoveSupplier = async (items: any[]) => {
+// 	items.forEach(async (item) => {
+// 		await SupplierModel.findByIdAndUpdate(item._id, {
+// 			isDeleted: true,
+// 		});
+// 	});
+// };
 
 const getForm = async (req: any, res: any) => {
 	try {
